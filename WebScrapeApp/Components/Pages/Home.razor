@@ -1,0 +1,118 @@
+﻿@page "/"
+@rendermode InteractiveServer
+
+@using WebScrapeApp.Services
+@inject WebScrapeService webScrapeService
+
+<PageTitle>Scrape</PageTitle>
+
+<select @onchange="UpdateUrl">
+    <option value="">Select a site</option>
+    @foreach (var site in sites)
+    {
+        <option value="@site">@site</option>
+    }
+</select>
+
+<input @bind="url" placeholder="Enter URL" />
+<button class="btn btn-primary" @onclick="ScrapeUrl" disabled="@isLoading">Click me</button>
+
+@if (isLoading)
+{
+    <div class="loading-mask">
+        <p>Loading...</p>
+    </div>
+}
+@if (scrapeResult != null)
+{
+    <div>
+        <h5>URL</h5>
+        <p>@scrapeResult.Url</p>
+    </div>
+    <div>
+        @if (scrapeResult.Emails != null && scrapeResult.Emails.Count > 0)
+        {
+            <h5>Email Results</h5>
+            foreach (var item in scrapeResult.Emails)
+            {
+                <p>@item</p>
+            }
+        }
+    </div>
+    <div>
+        @if (scrapeResult.Content != null)
+        {
+            <h5>Scrape Result</h5>
+            <p>@scrapeResult.Content</p>
+        }
+    </div>
+}
+
+@code {
+    private string url = "https://immunology.insightscience.org";
+    private ScrapeResult scrapeResult = new ScrapeResult();
+    private bool isLoading = false;
+    //private string selectedSite;
+    private string[] sites = new string[]
+    {
+        "https://journals.sagepub.com/",
+        "https://www.springer.com/",
+        "https://www.nature.com",
+        "https://pubs.acs.org/journal/jacsat ",
+        "https://journals.aps.org/prl",
+        "https://journals.sagepub.com/",
+        "https://www.tandfonline.com/",
+        "https://onlinelibrary.wiley.com/",
+        "https://journals.plos.org/plosone/",
+        "https://www.hindawi.com/",
+        "https://www.sciencedirect.com/",
+        "https://pubs.acs.org/",
+        "https://link.springer.com/",
+        "https://academic.oup.com/journals/",
+        "https://www.nature.com/",
+        "https://www.elsevier.com/",
+        "https://www.tandfonline.com/",
+        "https://www.springer.com/",
+        "https://www.elsevier.com/",
+
+
+        "https://pubmed.ncbi.nlm.nih.gov/advanced/",
+        "https://europepmc.org/",
+        "https://www.sciencedirect.com/",
+        "https://onlinelibrary.wiley.com/",
+        "https://journals.plos.org/plosone/"
+    };
+
+    private void UpdateUrl(ChangeEventArgs e)
+    {
+        url = e.Value.ToString();
+    }
+
+    private async Task ScrapeUrl()
+    {
+        Console.WriteLine("ScrapeUrl method triggered"); // Log statement
+        scrapeResult = new ScrapeResult();
+        isLoading = true;
+        StateHasChanged();
+        try
+        {
+            if (!string.IsNullOrEmpty(url))
+            {
+                var result = await webScrapeService.ScrapUrlDynamic(url);
+                scrapeResult.Content = result.Content;
+                scrapeResult.Url = url;
+                scrapeResult.Emails = result.Emails;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}"); // Log any errors
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+}
+
