@@ -40,6 +40,16 @@
         }
     </div>
     <div>
+        @if (scrapeResult.Links != null && scrapeResult.Links.Count > 0)
+        {
+            <h5>Links</h5>
+            foreach (var item in scrapeResult.Links)
+            {
+                <p>@item</p>
+            }
+        }
+    </div>
+    <div>
         @if (scrapeResult.Content != null)
         {
             <h5>Scrape Result</h5>
@@ -98,10 +108,7 @@
         {
             if (!string.IsNullOrEmpty(url))
             {
-                var result = await webScrapeService.ScrapUrlDynamic(url);
-                scrapeResult.Content = result.Content;
-                scrapeResult.Url = url;
-                scrapeResult.Emails = result.Emails;
+                scrapeResult = await webScrapeService.ScrapUrlDynamic(url, true);
             }
         }
         catch (Exception ex)
