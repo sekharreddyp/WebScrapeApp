@@ -1,8 +1,10 @@
 ﻿@page "/"
 @rendermode InteractiveServer
 
+@using WebScrapeApp.ArticleServices
 @using WebScrapeApp.Services
 @inject WebScrapeService webScrapeService
+@inject SeleniumService seleniumService
 
 <PageTitle>Scrape</PageTitle>
 
@@ -15,6 +17,9 @@
 </select>
 
 <input @bind="url" placeholder="Enter URL" />
+<button class="btn btn-primary" @onclick="ScrapeUrl" disabled="@isLoading">Click me</button>
+<br />
+<input @bind="searchText" placeholder="Enter Search Text" />
 <button class="btn btn-primary" @onclick="ScrapeUrl" disabled="@isLoading">Click me</button>
 
 @if (isLoading)
@@ -60,6 +65,7 @@
 
 @code {
     private string url = "https://immunology.insightscience.org";
+    private string searchText;
     private ScrapeResult scrapeResult = new ScrapeResult();
     private bool isLoading = false;
     //private string selectedSite;
@@ -108,7 +114,13 @@
         {
             if (!string.IsNullOrEmpty(url))
             {
-                scrapeResult = await webScrapeService.ScrapUrlDynamic(url, true);
+                //scrapeResult = await webScrapeService.ScrapUrlDynamic(url, true);                
+                //var res = seleniumService.OpenBrowser(url);
+            }
+            if(!string.IsNullOrEmpty(searchText))
+            {
+                SagePub sagePub = new SagePub();
+                sagePub.RunSelenium(searchText);
             }
         }
         catch (Exception ex)

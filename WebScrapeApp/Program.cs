@@ -7,6 +7,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 builder.Services.AddScoped<WebScrapeService>();
+builder.Services.AddScoped<SeleniumService>();
 
 var app = builder.Build();
 
