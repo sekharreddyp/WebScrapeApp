@@ -20,7 +20,7 @@
 <button class="btn btn-primary" @onclick="ScrapeUrl" disabled="@isLoading">Click me</button>
 <br />
 <input @bind="searchText" placeholder="Enter Search Text" />
-<button class="btn btn-primary" @onclick="ScrapeUrl" disabled="@isLoading">Click me</button>
+<button class="btn btn-primary" @onclick="RunAutomation" disabled="@isLoading">Click me</button>
 
 @if (isLoading)
 {
@@ -114,13 +114,7 @@
         {
             if (!string.IsNullOrEmpty(url))
             {
-                //scrapeResult = await webScrapeService.ScrapUrlDynamic(url, true);                
-                //var res = seleniumService.OpenBrowser(url);
-            }
-            if(!string.IsNullOrEmpty(searchText))
-            {
-                SagePub sagePub = new SagePub();
-                sagePub.RunSelenium(searchText);
+                scrapeResult = await webScrapeService.ScrapUrlDynamic(url);                
             }
         }
         catch (Exception ex)
@@ -131,6 +125,22 @@
         {
             isLoading = false;
             StateHasChanged();
+        }
+    }
+
+    private void RunAutomation()
+    {
+        try
+        {
+            if (!string.IsNullOrEmpty(searchText))
+            {
+                SagePub sagePub = new SagePub();
+                sagePub.RunSelenium(searchText);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}"); // Log any errors
         }
     }
 }

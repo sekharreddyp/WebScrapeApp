@@ -35,6 +35,7 @@ namespace WebScrapeApp.ArticleServices
                 IWebElement search = driver.FindElement(By.ClassName("quick-search__input"));
                 search.SendKeys(SearchText);
                 search.SendKeys(Keys.Enter);
+                Task.Delay(20000).Wait();
 
                 //IWebElement searchButton = driver.FindElement(By.ClassName("quick-search__button"));
                 //searchButton.Click();
