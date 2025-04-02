@@ -134,8 +134,10 @@
         {
             if (!string.IsNullOrEmpty(searchText))
             {
-                SagePub sagePub = new SagePub();
-                sagePub.RunSelenium(searchText);
+                Mdpi mdpi = new Mdpi();
+                mdpi.RunSelenium(searchText);
+                // SagePub sagePub = new SagePub();
+                // sagePub.RunSelenium(searchText);
             }
         }
         catch (Exception ex)
