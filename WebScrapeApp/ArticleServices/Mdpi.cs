@@ -4,6 +4,8 @@ using OpenQA.Selenium;
 using OpenQA.Selenium.Support;
 using SeleniumExtras.WaitHelpers;
 using System.Text.RegularExpressions;
+using System.Data;
+using ClosedXML.Excel;
 
 namespace WebScrapeApp.ArticleServices
 {
@@ -30,6 +32,7 @@ namespace WebScrapeApp.ArticleServices
 
             // Set Edge options for downloading files
             EdgeOptions options = new EdgeOptions();
+            //options.AddArgument("--headless=new");
             options.AddUserProfilePreference("download.default_directory", downloadDirectory);
             options.AddUserProfilePreference("download.prompt_for_download", false);
             options.AddUserProfilePreference("download.directory_upgrade", true);
@@ -50,7 +53,18 @@ namespace WebScrapeApp.ArticleServices
                 WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(10));
                 wait.Until(d => d.FindElement(By.Id("q")));
 
-                //IWebElement cookie = driver.FindElement(By.Id("accept"));
+                //try
+                //{
+                //    IWebElement cookieConsent = wait.Until(ExpectedConditions.ElementIsVisible(By.Id("uc-main-dialog")));
+                //    IWebElement acceptButton = cookieConsent.FindElement(By.XPath("//button[contains(text(), 'Accept All')]"));
+                //    acceptButton.Click();
+                //    wait.Until(ExpectedConditions.InvisibilityOfElementLocated(By.Id("uc-main-dialog")));
+                //}
+                //catch (WebDriverTimeoutException)
+                //{
+                //    // If the overlay is not found, continue with the script
+                //}
+                //IWebElement cookie = driver.FindElement(By.XPath("//*[@id=\"deny\"]"));
                 //cookie.Click();
                 //IWebElement acceptCookiesButton = wait.Until(ExpectedConditions.ElementToBeClickable(By.Id("accept")));
                 //acceptCookiesButton.Click();
@@ -66,7 +80,7 @@ namespace WebScrapeApp.ArticleServices
                 IWebElement search = driver.FindElement(By.Id("q"));
                 search.SendKeys(SearchText);
                 search.SendKeys(Keys.Enter);
-                //Task.Delay(10000).Wait();
+                Task.Delay(10000).Wait();
 
                 IWebElement pageInfoDiv = driver.FindElement(By.XPath("//div[contains(text(), 'Displaying article') and contains(text(), 'on page')]"));
 
@@ -95,23 +109,23 @@ namespace WebScrapeApp.ArticleServices
                     {
                         IWebElement export = driver.FindElement(By.ClassName("export-options-show"));
                         export.Click();
-                        Task.Delay(3000).Wait();
+                        //Task.Delay(3000).Wait();
                         IWebElement selectCheckbox = driver.FindElement(By.Id("selectUnselectAll"));
                         selectCheckbox.Click();
-                        Task.Delay(3000).Wait();
+                        //Task.Delay(3000).Wait();
 
                         IWebElement dropdown = driver.FindElement(By.XPath("//*[@id=\"exportArticles\"]/div/div[1]/div[2]/div/div[2]/div[2]/div/div"));
                         dropdown.Click(); // Open the dropdown
-                        Task.Delay(3000).Wait();
+                        //Task.Delay(3000).Wait();
 
                         // Wait for the options to be visible and locate the option
                         IWebElement option = wait.Until(d => d.FindElement(By.XPath("//*[@id=\"exportArticles\"]/div/div[1]/div[2]/div/div[2]/div[2]/div/div/div/ul/li[6]")));
                         option.Click();
-                        Task.Delay(3000).Wait();
+                        //Task.Delay(3000).Wait();
 
                         IWebElement exportButton = driver.FindElement(By.Id("articleBrowserExport_top"));
                         exportButton.Click();
-                        Task.Delay(3000).Wait();
+                        //Task.Delay(3000).Wait();
 
                         //// Extract the text from the element
                         //displayedText = articleTextDiv.Text;
@@ -124,11 +138,12 @@ namespace WebScrapeApp.ArticleServices
                         pagenumber.SendKeys(Keys.Enter);
 
                         // Wait for the next page to load
-                        Task.Delay(5000).Wait();
+                        Task.Delay(3000).Wait();
+                        WriteToExcel();
                     }
                     catch (Exception ex)
                     {
-                        break;
+                        throw;
                         //i = i - 1;
                     }
                 }
@@ -139,33 +154,14 @@ namespace WebScrapeApp.ArticleServices
                 //searchButton.Click();
 
 
-                // Wait for the search results page
-                wait.Until(d => d.FindElement(By.ClassName("search-page")));
-
-                // Example: Extracting titles of journals from the search result page
-                IReadOnlyCollection<IWebElement> journalTitles = driver.FindElements(By.CssSelector("div.result-list-item h2 a"));
-                foreach (var title in journalTitles)
-                {
-                    Console.WriteLine(title.Text);
-                }
-
-                // Example: Click on the first result
-                IWebElement firstJournal = driver.FindElement(By.CssSelector("div.result-list-item h2 a"));
-                firstJournal.Click();
-
-                // Wait for the article page to load
-                wait.Until(d => d.FindElement(By.CssSelector("h1")));
-
-                // Take a screenshot of the article page (optional)
-                Screenshot screenshot = ((ITakesScreenshot)driver).GetScreenshot();
-                screenshot.SaveAsFile("screenshot.png");
 
                 // Pause the program for a few seconds to see the result
                 System.Threading.Thread.Sleep(5000); // 5 seconds
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Error: " + ex.Message);
+                throw;
+                //Console.WriteLine("Error: " + ex.Message);
             }
             finally
             {
@@ -173,5 +169,79 @@ namespace WebScrapeApp.ArticleServices
                 driver.Quit();
             }
         }
+
+        private void WriteToExcel()
+        {
+            string downloadDirectory = @"C:\CustomDownloads\mdpi";
+            string excelFilePath = Path.Combine(downloadDirectory, "output.xlsx");
+
+            // Get all .txt files from the download directory
+            string[] txtFiles = Directory.GetFiles(downloadDirectory, "*.txt");
+
+            DataTable datatable = new DataTable();
+            char[] delimiter = new char[] { '\t' };
+
+            foreach (string file in txtFiles)
+            {
+                using (StreamReader streamreader = new StreamReader(file))
+                {
+                    // Read the column headers from the first file
+                    if (datatable.Columns.Count == 0)
+                    {
+                        string[] columnheaders = streamreader.ReadLine().Split(delimiter);
+                        foreach (string columnheader in columnheaders)
+                        {
+                            datatable.Columns.Add(columnheader);
+                        }
+                    }
+
+                    // Read the data rows
+                    while (streamreader.Peek() > 0)
+                    {
+                        DataRow datarow = datatable.NewRow();
+                        datarow.ItemArray = streamreader.ReadLine().Split(delimiter);
+                        datatable.Rows.Add(datarow);
+                    }
+                }
+            }
+
+            // Append data to Excel file
+            using (var workbook = new XLWorkbook())
+            {
+                IXLWorksheet worksheet;
+                if (workbook.Worksheets.Count == 0)
+                {
+                    worksheet = workbook.Worksheets.Add("Sheet1");
+                }
+                else
+                {
+                    worksheet = workbook.Worksheet(1);
+                }
+
+                int startRow = worksheet.LastRowUsed()?.RowNumber() + 1 ?? 1;
+
+                // Write the headers if the worksheet is empty
+                if (startRow == 1)
+                {
+                    for (int i = 0; i < datatable.Columns.Count; i++)
+                    {
+                        worksheet.Cell(startRow, i + 1).Value = datatable.Columns[i].ColumnName;
+                    }
+                    startRow++;
+                }
+
+                // Write the data
+                for (int i = 0; i < datatable.Rows.Count; i++)
+                {
+                    for (int j = 0; j < datatable.Columns.Count; j++)
+                    {
+                        worksheet.Cell(startRow + i, j + 1).Value = datatable.Rows[i][j].ToString();
+                    }
+                }
+
+                workbook.SaveAs(excelFilePath);
+            }
+        }
+
     }
 }

@@ -21,7 +21,7 @@
 <br />
 <input @bind="searchText" placeholder="Enter Search Text" />
 <button class="btn btn-primary" @onclick="RunAutomation" disabled="@isLoading">Click me</button>
-
+<div>@returnStatus</div>
 @if (isLoading)
 {
     <div class="loading-mask">
@@ -68,6 +68,7 @@
     private string searchText;
     private ScrapeResult scrapeResult = new ScrapeResult();
     private bool isLoading = false;
+    private string returnStatus = string.Empty;
     //private string selectedSite;
     private string[] sites = new string[]
     {
@@ -114,7 +115,7 @@
         {
             if (!string.IsNullOrEmpty(url))
             {
-                scrapeResult = await webScrapeService.ScrapUrlDynamic(url);                
+                scrapeResult = await webScrapeService.ScrapUrlDynamic(url);
             }
         }
         catch (Exception ex)
@@ -132,6 +133,7 @@
     {
         try
         {
+            returnStatus = string.Empty; // Reset return status
             if (!string.IsNullOrEmpty(searchText))
             {
                 Mdpi mdpi = new Mdpi();
@@ -142,6 +144,7 @@
         }
         catch (Exception ex)
         {
+            returnStatus = $"Error: {ex.Message}";
             Console.WriteLine($"Error: {ex.Message}"); // Log any errors
         }
     }
